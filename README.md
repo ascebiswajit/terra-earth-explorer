@@ -6,7 +6,7 @@ An open-source, full-screen Earth explorer built with HTML, CSS, JavaScript and 
 
 - Interactive 3D globe and 2D map
 - Satellite imagery and OpenStreetMap layers
-- Worldwide city search through Open-Meteo geocoding
+- Place and address search with automatic map navigation and selectable alternatives
 - Search by `latitude, longitude` and click-to-inspect coordinates
 - Featured destinations and place details
 - Zoom, reset north, whole-Earth view and optional device location
@@ -45,7 +45,7 @@ Before submitting changes, check globe loading, city search, coordinate validati
 - CesiumJS 1.121 is loaded from the Cesium CDN.
 - Satellite tiles are served by Esri World Imagery.
 - Street tiles are served by OpenStreetMap.
-- City search uses Open-Meteo geocoding / GeoNames.
+- Place and address search uses Photon / OpenStreetMap, with Open-Meteo / GeoNames as a fallback. The public Photon demo service is suitable for moderate usage; high-traffic deployments should use a dedicated geocoder.
 - Place descriptions are curated; Wikipedia links provide further reading.
 - Fonts are loaded from Google Fonts.
 
@@ -55,7 +55,7 @@ This project uses an ellipsoid globe. It does not include terrain elevation, pho
 
 ## Privacy
 
-Search queries are sent to Open-Meteo when submitted. Map providers receive tile requests as you explore. Device location is requested only when the location button is pressed. The current implementation has no application backend or analytics.
+Search queries are sent to Photon when submitted, and to Open-Meteo if Photon returns no results or fails. Map providers receive tile requests as you explore. Device location is requested only when the location button is pressed. The current implementation has no application backend or analytics.
 
 ## Contribute
 
