@@ -5,7 +5,8 @@ An open-source, full-screen Earth explorer built with HTML, CSS, JavaScript and 
 ## Features
 
 - Interactive 3D globe and 2D map
-- Satellite imagery and OpenStreetMap layers
+- Provider-advertised satellite zoom levels, place labels and OpenStreetMap street detail
+- High-density display rendering (up to 2×) and map-tile loading feedback
 - Place and address search with automatic map navigation and selectable alternatives
 - Search by `latitude, longitude` and click-to-inspect coordinates
 - Featured destinations and place details
