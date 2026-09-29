@@ -69,6 +69,42 @@ function locate(){
 }
 $('searchForm').onsubmit=e=>{e.preventDefault();search($('search').value)};$('search').oninput=()=>{searchSeq++;$('searchResults').replaceChildren()};$('useLocation').onclick=locate;
 function init(){if(!window.Cesium){$('loadText').textContent='The globe could not load. Check your connection and reload.';return}try{Cesium.Ion.defaultAccessToken='';viewer=new Cesium.Viewer('globe',{baseLayer:false,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,requestRenderMode:true,useBrowserRecommendedResolution:false,terrainProvider:new Cesium.EllipsoidTerrainProvider()});configureMapDetail();viewer.scene.backgroundColor=Cesium.Color.fromCssColorString('#050a0e');viewer.scene.globe.baseColor=Cesium.Color.fromCssColorString('#183b4b');viewer.scene.globe.showGroundAtmosphere=true;viewer.scene.screenSpaceCameraController.minimumZoomDistance=120;viewer.scene.screenSpaceCameraController.maximumZoomDistance=35000000;viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(-60.0148542,-23.22307314,12000000)});setLayer('satellite');$('loading').style.display='none';if(pendingPlace){const p=pendingPlace;pendingPlace=null;fly(p)}viewer.camera.changed.addEventListener(()=>{let c=viewer.camera.positionCartographic;$('altitude').textContent='Camera '+Math.round(c.height/1000).toLocaleString()+' km'});viewer.camera.percentageChanged=.02;let handler=new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);handler.setInputAction(e=>{let ray=viewer.camera.getPickRay(e.position),point=viewer.scene.globe.pick(ray,viewer.scene);if(!point)return;let c=Cesium.Cartographic.fromCartesian(point),lat=Cesium.Math.toDegrees(c.latitude),lon=Cesium.Math.toDegrees(c.longitude);details({name:'Pinned location',lat,lon,kind:'Map point',country:'COORDINATES',desc:'A point on our planet. Zoom in to explore its surroundings, or switch to the street map for geographic labels.'});tab('details');$('panel').classList.remove('collapsed');$('coords').textContent=coord(lat,true)+'  '+coord(lon,false);if(marker)viewer.entities.remove(marker);marker=viewer.entities.add({position:point,point:{pixelSize:9,color:Cesium.Color.fromCssColorString('#b2efd2'),outlineColor:Cesium.Color.WHITE,outlineWidth:2}})},Cesium.ScreenSpaceEventType.LEFT_CLICK)}catch(e){$('loadText').textContent='Unable to start the 3D globe. Please use a browser with WebGL enabled and reload.';console.error(e)}}
+let clarityTimer,clarityController,claritySequence=0,clarityLimited=false,clearerDestination=null;
+function cancelClarityCheck(){
+ clearTimeout(clarityTimer);clarityController?.abort();claritySequence++;clarityLimited=false;clearerDestination=null;$('clarityNotice').hidden=true;
+}
+function scheduleClarityCheck(){
+ clearTimeout(clarityTimer);if(activeMap!=='satellite'||!viewer)return;
+ clarityTimer=setTimeout(checkClarity,500);
+}
+async function checkClarity(){
+ if(activeMap!=='satellite'||!viewer||!window.TerraClarity)return;
+ const canvas=viewer.scene.canvas;if(!canvas)return;
+ const center=new Cesium.Cartesian2(canvas.clientWidth/2,canvas.clientHeight/2);
+ const point=viewer.camera.pickEllipsoid(center,viewer.scene.globe.ellipsoid);
+ const next=viewer.camera.pickEllipsoid(new Cesium.Cartesian2(center.x+1,center.y),viewer.scene.globe.ellipsoid);
+ if(!point||!next)return;
+ const c=Cesium.Cartographic.fromCartesian(point),lat=Cesium.Math.toDegrees(c.latitude),lon=Cesium.Math.toDegrees(c.longitude);
+ const metres=Cesium.Cartesian3.distance(point,next);if(!Number.isFinite(metres)||metres<=0)return;
+ const desired=window.TerraClarity.desiredLevel(lat,metres);if(desired<16)return;
+ const seq=++claritySequence;clarityController?.abort();clarityController=new AbortController();const controller=clarityController;
+ const timeout=setTimeout(()=>controller.abort(),8000);
+ try{
+  const result=await window.TerraClarity.inspect(lat,lon,desired,controller.signal);
+  if(seq!==claritySequence||activeMap!=='satellite')return;
+  clarityLimited=result.limited;
+  if(result.limited){
+   const usable=result.level!==null;
+   const pixelSize=usable?156543.03392*Math.cos(c.latitude)/(2**result.level):null;
+   clearerDestination=usable?{lat,lon,height:Math.max(500,pixelSize*canvas.clientHeight/(2*Math.tan(Math.PI/6))*1.25)}:null;
+   $('clarityMessage').textContent='The imagery provider has no tile at this detail level for the centre of this view. Enlarging the available image cannot reveal additional building details.';
+   $('clearerView').hidden=!usable;$('clarityNotice').hidden=false;
+  }
+  updateMapStatus();
+ }catch(e){if(seq===claritySequence&&activeMap==='satellite')$('mapStatus').textContent='Detail availability could not be checked'}finally{clearTimeout(timeout)}
+}
+$('clearerView').onclick=()=>{if(!viewer||!clearerDestination)return;const p=clearerDestination;viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(p.lon,p.lat,p.height),orientation:{heading:0,pitch:-Math.PI/2,roll:0},duration:1.2})};
+$('clarityStreets').onclick=()=>setLayer('streets');
 function configureMapDetail(){
  // Honor Retina / high-density displays without allocating an unbounded canvas.
  const ratio=Math.max(1,window.devicePixelRatio||1);
@@ -78,10 +114,11 @@ function configureMapDetail(){
  viewer.scene.globe.preloadAncestors=true;
  viewer.scene.globe.preloadSiblings=false;
  viewer.scene.globe.tileLoadProgressEvent.addEventListener(count=>{tilePending=count;updateMapStatus()});
- viewer.camera.moveStart.addEventListener(()=>{$('mapStatus').textContent='Moving · detail updates as you zoom'});
- viewer.camera.moveEnd.addEventListener(()=>{viewer.scene.requestRender();updateMapStatus()});
+ viewer.camera.moveStart.addEventListener(()=>{cancelClarityCheck();$('mapStatus').textContent='Moving · detail updates as you zoom'});
+ viewer.camera.moveEnd.addEventListener(()=>{viewer.scene.requestRender();updateMapStatus();scheduleClarityCheck()});
 }
 function updateMapStatus(){
+ if(clarityLimited&&activeMap==='satellite'){$('mapStatus').textContent='Higher-detail imagery unavailable here';return}
  if(layerLoading){$('mapStatus').textContent='Loading map layer…';return}
  if(tilePending>0){$('mapStatus').textContent='Loading map detail…';return}
  if(tileFailed){$('mapStatus').textContent='Some tiles unavailable · try Street map';return}
@@ -100,7 +137,7 @@ function watchTiles(provider,request){
 }
 async function setLayer(type){
  if(!viewer)return;
- const request=++layerRequest;layerLoading=true;tileFailed=false;updateMapStatus();
+ cancelClarityCheck();const request=++layerRequest;layerLoading=true;tileFailed=false;updateMapStatus();
  try{
   const provider=type==='satellite'
    ?await arcgisProvider('https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer')
@@ -111,7 +148,7 @@ async function setLayer(type){
   viewer.imageryLayers.addImageryProvider(provider);activeMap=type;layerLoading=false;
   ['satellite','streets'].forEach(id=>$(id).classList.toggle('active',id===type));
   $('labels').disabled=type!=='satellite';
-  viewer.scene.requestRender();updateMapStatus();
+  viewer.scene.requestRender();updateMapStatus();scheduleClarityCheck();
   if(type==='satellite'){
    try{
     const labels=await arcgisProvider('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer');

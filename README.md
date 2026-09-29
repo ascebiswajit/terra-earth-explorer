@@ -7,6 +7,7 @@ An open-source, full-screen Earth explorer built with HTML, CSS, JavaScript and 
 - Interactive 3D globe and 2D map
 - Provider-advertised satellite zoom levels, place labels and OpenStreetMap street detail
 - High-density display rendering (up to 2×) and map-tile loading feedback
+- Satellite availability checks at the view centre, with a lower-zoom recovery action when detailed tiles are missing
 - Place and address search with automatic map navigation and selectable alternatives
 - Search by `latitude, longitude` and click-to-inspect coordinates
 - Featured destinations and place details
@@ -61,3 +62,5 @@ Search queries are sent to Photon when submitted, and to Open-Meteo if Photon re
 ## Contribute
 
 Bug reports, documentation improvements, accessibility fixes and focused pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
+
+The availability check uses Esri tile metadata after camera movement stops. It checks the view centre, not every visible tile. A tile being available does not guarantee sharper native photography; lower-resolution photography can still be present in a high-level tile. Checks are cached in memory and failures never claim imagery is missing.
