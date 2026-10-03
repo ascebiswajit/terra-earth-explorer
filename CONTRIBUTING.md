@@ -1,39 +1,41 @@
 # Contributing to Terra
 
-Everyone is welcome to contribute. Please be respectful and keep discussions focused on improving the explorer.
+Terra is public and welcomes bug reports, documentation, accessibility fixes, translations and focused feature proposals. Be respectful and discuss substantial changes in an issue first.
 
-## Get started
+## Run locally
 
-1. Fork this repository on GitHub and clone your fork.
+1. Fork `ascebiswajit/terra-earth-explorer` and clone your fork.
 2. Create a branch: `git switch -c fix/short-description`.
-3. Start the local server using the README instructions.
-4. Make a focused change and verify the affected behavior.
-5. Commit, push your branch and open a pull request against `main`.
+3. Install Node.js 22 and Python 3.
+4. Run `npm ci`, then `npm start`.
+5. Open http://localhost:8080 in a WebGL-capable browser.
 
-For a substantial feature, open an issue first to discuss its behavior and scope. Small bug fixes and documentation improvements can go directly to a pull request.
+The application is static. Files in `dist` are editable source files; no application build is required. Development tools are optional for viewing the application but required before submitting code.
 
-## Good first contributions
+## Submit a pull request
 
-- Improve keyboard navigation and focus behavior.
-- Improve empty, loading and network-error states.
-- Add well-sourced featured destinations using the existing place structure.
-- Improve mobile usability and contributor documentation.
+1. Make a focused change on your branch.
+2. Run `npm run format` and `npm run check`.
+3. Test the affected flow in a browser and on a narrow viewport.
+4. Commit and push to your fork.
+5. Open a pull request targeting `main`, describing the problem, change and verification.
+6. Address review comments and wait for required checks and approval.
 
-## Guidelines
+Do not push directly to `main`. Do not bypass branch protection or force-push over another person's work. Repository administrators must configure enforcement in GitHub; this document itself cannot protect a branch. Authors cannot approve their own PRs.
 
-- Use plain JavaScript, HTML and CSS consistent with the existing project.
-- Keep changes small and explain why they are needed.
-- Never commit secrets, personal data or private hosting configuration.
-- Preserve all map-provider attribution and respect third-party licenses.
-- Treat remote API content as untrusted; use `textContent` for displayed text.
-- Add dependencies only when they solve a concrete problem.
+## What to test
 
-## Verify your change
+For map changes, test road and satellite views, zoom and navigation controls, layer switching, search, location permission denial and slow or failed map requests. For sharing changes, open the generated link in a fresh tab and check centre, zoom and layer. Keep attribution readable. Attach screenshots for visual changes, removing personal coordinates first.
 
-Run `node --check dist/app.js`. In a WebGL-capable browser, check the changed flow and any related controls. For interface changes, test a narrow mobile viewport and keyboard focus, and attach before/after screenshots to your pull request.
+## Code and data rules
 
-Cover relevant failures: unavailable services, no search results, invalid coordinates and denied location permission. State what you tested and any known limitations in the pull request.
+Use Prettier and the shared ESLint configuration. Keep external API content in `textContent`, validate coordinates and avoid unnecessary dependencies. Do not add secrets, credentials or private hosting metadata. Public map configuration belongs in `dist/config.js`. Keep provider attribution and respect imagery/data terms. Never use generated detail to imply genuine geographic data.
 
-## Report a bug
+## Starter tasks
 
-Include reproduction steps, expected and actual behavior, browser/device information and screenshots where useful. Remove personal coordinates or other private data before sharing.
+- Improve keyboard controls and focus handling.
+- Test local-language place names and ambiguous addresses.
+- Improve mobile controls on small screens.
+- Add sourced destinations and improve documentation.
+
+See [the release notes](docs/PUBLIC_RELEASE.md) for architecture, current limits and the release process.
