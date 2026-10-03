@@ -1,10 +1,11 @@
 ---
 name: Bug report
 about: Report a reproducible problem with the explorer
-title: ''
-labels: ''
-assignees: ''
+title: ""
+labels: ""
+assignees: ""
 ---
+
 ## What happened?
 
 ## Steps to reproduce

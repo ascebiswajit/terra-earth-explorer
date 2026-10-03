@@ -1,12 +1,196 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Terra — Earth Explorer</title><meta name="description" content="Explore our planet in 3D. Discover places, switch satellite and street maps, and inspect coordinates around the world."><link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Widgets/widgets.css"><link rel="stylesheet" href="style.css"></head><body>
-<div id="globe" aria-label="Interactive Earth map"></div><div id="loading"><span class="orbit">◎</span><h2>A world to explore.</h2><p id="loadText">Preparing your view of Earth…</p><button onclick="location.reload()">Reload explorer</button></div>
-<header><a class="brand" href="./"><span class="brand-icon">◎</span>terra<span class="brand-label">EARTH EXPLORER</span></a><div class="header-right"><span class="desktop">A little perspective changes everything.</span><button id="help" aria-label="Help">?</button></div></header>
-<aside id="panel"><div class="panel-top"><div class="eyebrow">THE WORLD, AT YOUR FINGERTIPS</div><h1>Where to?</h1><form id="searchForm"><span aria-hidden="true">⌕</span><input id="search" aria-label="Search places or latitude, longitude" placeholder="Place, address or coordinates" autocomplete="off"><button aria-label="Search" type="submit">Go</button></form><button id="useLocation" type="button">⌖ Use my current location</button><div id="searchResults" aria-live="polite"></div></div><div class="tabs"><button class="active" data-tab="discover">Discover</button><button data-tab="details">Place details</button></div>
-<div id="discover" class="tab-content"><div class="section-heading"><h2>Go somewhere extraordinary</h2><span>01 — 06</span></div><div id="places"></div><div class="explore-note"><span>✧</span><div><b>Follow your curiosity</b><p>Drag to travel. Scroll to get closer. Click anywhere to see its coordinates.</p></div></div><button class="surprise" id="surprise">✧ &nbsp; Take me somewhere</button></div>
-<div id="details" class="tab-content" hidden><div class="eyebrow" id="region">SOUTH AMERICA</div><h2 id="placeTitle">Gran Chaco</h2><p id="description"></p><dl id="facts"></dl><button id="fly" class="surprise">Explore this location</button><a id="learn" target="_blank" rel="noopener noreferrer">Read more on Wikipedia ↗</a><p class="small" id="detailSource">Location information · Curated overview</p></div><footer>OUR HOME. YOUR NEXT DISCOVERY.</footer></aside>
-<button id="panelToggle" aria-label="Toggle explorer panel">☰</button><div class="view-label"><span class="eyebrow">YOU ARE EXPLORING</span><strong id="viewName">South America</strong><span id="viewSub">23.2231° S · 60.0149° W</span></div>
-<div class="map-bottom"><div class="layers"><button id="satellite" class="active">◉ &nbsp; Satellite</button><button id="streets">▧ &nbsp; Street map</button></div><button id="labels" class="active" aria-pressed="true" title="Toggle satellite place labels">Labels</button><span id="mapStatus" role="status" aria-live="polite">Loading map detail…</span></div>
-<div class="controls"><button id="north" title="Reset north" aria-label="Reset north"><span class="north">N</span>△</button><button id="mode" title="Switch 2D and 3D">2D</button><button id="home" title="View whole Earth" aria-label="View whole Earth">◎</button><button id="locate" title="My location" aria-label="My location">⌖</button><div class="zoom"><button id="plus" aria-label="Zoom in">+</button><button id="minus" aria-label="Zoom out">−</button></div></div>
-<div id="clarityNotice" hidden role="status"><strong>More zoom won’t add detail here</strong><p id="clarityMessage"></p><button id="clearerView">Zoom out for clearer view</button><button id="clarityStreets">View street map</button></div><div id="telemetry"><span id="coords">23.2231° S &nbsp; 60.0149° W</span><span id="altitude">Camera 12,000 km</span></div><div id="toast" role="status"></div>
-<dialog id="helpDialog"><button id="closeHelp" aria-label="Close help">×</button><span class="eyebrow">WELCOME TO TERRA</span><h2>Make yourself at home.</h2><p>Explore a 3D globe using real satellite imagery.</p><dl><dt>Move around</dt><dd>Drag with your mouse or one finger.</dd><dt>Zoom</dt><dd>Scroll, pinch, or use + and −.</dd><dt>Tilt & rotate</dt><dd>Right-drag or Ctrl + drag in 3D.</dd><dt>Find a place</dt><dd>Search a city or enter latitude, longitude.</dd><dt>Inspect a point</dt><dd>Click the globe to open coordinates.</dd></dl><p class="small">Powered by CesiumJS, Esri imagery, OpenStreetMap and Photon / OpenStreetMap and Open-Meteo geocoding. Imagery dates and resolution vary. This explorer uses an ellipsoid globe; photorealistic buildings, terrain elevation and Street View are not included.</p></dialog>
-<script src="https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Cesium.js"></script><script src="clarity.js"></script><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Terra — Earth Explorer</title>
+    <meta
+      name="description"
+      content="Explore our planet in 3D. Discover places, switch satellite and street maps, and inspect coordinates around the world."
+    />
+    <link
+      rel="stylesheet"
+      href="https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Widgets/widgets.css"
+    />
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.12.0/dist/maplibre-gl.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="streetMap" hidden aria-label="Detailed street map"></div>
+    <div id="globe" aria-label="Interactive Earth map"></div>
+    <div id="loading">
+      <span class="orbit">◎</span>
+      <h2>A world to explore.</h2>
+      <p id="loadText">Preparing your view of Earth…</p>
+      <button onclick="location.reload()">Reload explorer</button>
+    </div>
+    <header>
+      <a class="brand" href="./"
+        ><span class="brand-icon">◎</span>terra<span class="brand-label">EARTH EXPLORER</span></a
+      >
+      <div class="header-right">
+        <span class="desktop">A little perspective changes everything.</span
+        ><button id="shareView">Share view</button><button id="help" aria-label="Help">?</button>
+      </div>
+    </header>
+    <aside id="panel">
+      <div class="panel-top">
+        <div class="eyebrow">THE WORLD, AT YOUR FINGERTIPS</div>
+        <h1>Where to?</h1>
+        <form id="searchForm">
+          <span aria-hidden="true">⌕</span
+          ><input
+            id="search"
+            aria-label="Search places or latitude, longitude"
+            placeholder="Place, address or coordinates"
+            autocomplete="off"
+          /><button aria-label="Search" type="submit">Go</button>
+        </form>
+        <button id="useLocation" type="button">⌖ Use my current location</button>
+        <div id="searchResults" aria-live="polite"></div>
+      </div>
+      <div class="tabs">
+        <button class="active" data-tab="discover">Discover</button
+        ><button data-tab="details">Place details</button>
+      </div>
+      <div id="discover" class="tab-content">
+        <div class="section-heading">
+          <h2>Go somewhere extraordinary</h2>
+          <span>01 — 06</span>
+        </div>
+        <div id="places"></div>
+        <div class="explore-note">
+          <span>✧</span>
+          <div>
+            <b>Follow your curiosity</b>
+            <p>Drag to travel. Scroll to get closer. Click anywhere to see its coordinates.</p>
+          </div>
+        </div>
+        <button class="surprise" id="surprise">✧ &nbsp; Take me somewhere</button>
+      </div>
+      <div id="details" class="tab-content" hidden>
+        <div class="eyebrow" id="region">SOUTH AMERICA</div>
+        <h2 id="placeTitle">Gran Chaco</h2>
+        <p id="description"></p>
+        <dl id="facts"></dl>
+        <button id="fly" class="surprise">Explore this location</button
+        ><a id="learn" target="_blank" rel="noopener noreferrer">Read more on Wikipedia ↗</a>
+        <p class="small" id="detailSource">Location information · Curated overview</p>
+      </div>
+      <footer>
+        <a
+          href="https://github.com/ascebiswajit/terra-earth-explorer"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Contribute on GitHub</a
+        >
+        · <button id="privacyButton">Privacy & data</button>
+      </footer>
+    </aside>
+    <button id="panelToggle" aria-label="Toggle explorer panel">☰</button>
+    <div class="view-label">
+      <span class="eyebrow">YOU ARE EXPLORING</span><strong id="viewName">South America</strong
+      ><span id="viewSub">23.2231° S · 60.0149° W</span>
+    </div>
+    <div class="map-bottom">
+      <div class="layers">
+        <button id="satellite" class="active">◉ &nbsp; Satellite</button
+        ><button id="streets">▧ &nbsp; Road detail</button>
+      </div>
+      <button id="labels" class="active" aria-pressed="true" title="Toggle satellite place labels">
+        Labels</button
+      ><span id="mapStatus" role="status" aria-live="polite">Loading map detail…</span>
+    </div>
+    <div class="controls">
+      <button id="north" title="Reset north" aria-label="Reset north">
+        <span class="north">N</span>△</button
+      ><button id="mode" title="Switch 2D and 3D">2D</button
+      ><button id="home" title="View whole Earth" aria-label="View whole Earth">◎</button
+      ><button id="locate" title="My location" aria-label="My location">⌖</button>
+      <div class="zoom">
+        <button id="plus" aria-label="Zoom in">+</button
+        ><button id="minus" aria-label="Zoom out">−</button>
+      </div>
+    </div>
+    <div id="clarityNotice" hidden role="status">
+      <strong>More zoom won’t add detail here</strong>
+      <p id="clarityMessage"></p>
+      <button id="clearerView">Zoom out for clearer view</button
+      ><button id="clarityStreets">View street map</button>
+    </div>
+    <div id="telemetry">
+      <span id="coords">23.2231° S &nbsp; 60.0149° W</span
+      ><span id="altitude">Camera 12,000 km</span>
+    </div>
+    <div id="toast" role="status"></div>
+    <dialog id="helpDialog">
+      <button id="closeHelp" aria-label="Close help">×</button
+      ><span class="eyebrow">WELCOME TO TERRA</span>
+      <h2>Make yourself at home.</h2>
+      <p>Explore a 3D globe using real satellite imagery.</p>
+      <dl>
+        <dt>Move around</dt>
+        <dd>Drag with your mouse or one finger.</dd>
+        <dt>Zoom</dt>
+        <dd>Scroll, pinch, or use + and −.</dd>
+        <dt>Tilt & rotate</dt>
+        <dd>Right-drag or Ctrl + drag in 3D.</dd>
+        <dt>Find a place</dt>
+        <dd>
+          Search a city, village or address. Add the state and country to distinguish similar names.
+          You can also enter latitude, longitude.
+        </dd>
+        <dt>Inspect a point</dt>
+        <dd>Click the globe to open coordinates.</dd>
+      </dl>
+      <p class="small">
+        Powered by CesiumJS, MapLibre GL JS, OpenFreeMap, Esri imagery, OpenStreetMap, Photon and
+        Open-Meteo geocoding. Imagery dates and resolution vary. This explorer uses an ellipsoid
+        globe; photorealistic buildings, terrain elevation and Street View are not included.
+      </p>
+    </dialog>
+    <dialog id="shareDialog">
+      <button id="closeShare" aria-label="Close share dialog">×</button>
+      <h2>Share this map view</h2>
+      <p>
+        This link includes the visible map centre, zoom and layer. Check the location before
+        sharing.
+      </p>
+      <input id="shareUrl" readonly aria-label="Map view link" /><button id="copyShare">
+        Copy link
+      </button>
+      <p id="shareStatus" role="status"></p>
+    </dialog>
+    <dialog id="privacyDialog">
+      <button id="closePrivacy" aria-label="Close privacy information">×</button>
+      <h2>Privacy & map data</h2>
+      <p>
+        Search terms are sent to Photon, with Open-Meteo as a fallback. Map providers receive
+        requests for areas you view. Current location is requested only when you press the location
+        button.
+      </p>
+      <p>
+        Share links contain map coordinates. Terra has no accounts, analytics or server-side
+        location history. Map providers have their own data policies.
+      </p>
+      <p>
+        Road detail uses vector map data from OpenFreeMap and OpenStreetMap. Buildings, roads and
+        names appear where contributors have mapped them. Satellite photography has different
+        resolution limits by area.
+      </p>
+      <a
+        href="https://github.com/ascebiswajit/terra-earth-explorer/issues"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Report a problem</a
+      >
+    </dialog>
+    <script src="config.js"></script>
+    <script src="view-state.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@5.12.0/dist/maplibre-gl.js"></script>
+    <script src="street.js"></script>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Cesium.js"></script>
+    <script src="clarity.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

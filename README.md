@@ -1,66 +1,69 @@
 # Terra — Earth Explorer
 
-An open-source, full-screen Earth explorer built with HTML, CSS, JavaScript and CesiumJS. Explore satellite imagery, find cities, inspect coordinates and discover featured destinations.
+Explore places, inspect satellite imagery and share a map view. Built with plain JavaScript, CesiumJS and MapLibre GL JS.
+
+[Public website](https://terra-earth-explorer.biswajitnayak2402.chatgpt.site) · [Contributing](CONTRIBUTING.md) · [Release details](docs/PUBLIC_RELEASE.md)
 
 ## Features
 
-- Interactive 3D globe and 2D map
-- Provider-advertised satellite zoom levels, place labels and OpenStreetMap street detail
-- High-density display rendering (up to 2×) and map-tile loading feedback
-- Satellite availability checks at the view centre, with a lower-zoom recovery action when detailed tiles are missing
-- Place and address search with automatic map navigation and selectable alternatives
-- Search by `latitude, longitude` and click-to-inspect coordinates
-- Featured destinations and place details
-- Zoom, reset north, whole-Earth view and optional device location
-- Responsive desktop and mobile interface
+- Vector Road detail with crisp roads, names and mapped building outlines
+- Satellite globe, 2D/3D switching and imagery-availability feedback
+- Place, address and coordinate search with alternatives and regional context
+- Optional device location and selectable map points
+- Share links that restore location, zoom and layer
+- Responsive controls, privacy information and source attribution
 
-## Run locally
+The live Site and an unmerged release branch can differ. See the release PR and hosting notes before assuming a feature is live.
 
-No package installation or API key is required for the current implementation. You need Python 3, an internet connection and a browser with WebGL enabled.
+## Local development
 
-```sh
-python3 -m http.server 8080 --directory dist
-```
-
-Open http://localhost:8080. Serve the site over HTTPS when deploying; browser geolocation requires a secure context (localhost also works).
-
-## Project files
-
-| File | Purpose |
-| --- | --- |
-| `dist/index.html` | Explorer structure and external Cesium loader |
-| `dist/style.css` | Responsive layout and visual styling |
-| `dist/app.js` | Globe, imagery, search and place interactions |
-
-`dist` contains the editable source files, not generated build output. There is no build step. Any static host can serve this directory.
-
-## Validation
+Use Node.js 22 and Python 3:
 
 ```sh
-node --check dist/app.js
+npm ci
+npm start
 ```
 
-Before submitting changes, check globe loading, city search, coordinate validation, both map layers, zoom, 2D/3D switching and the mobile panel. Test failed network requests and denied geolocation when relevant. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Open http://localhost:8080. Internet and WebGL are required. HTTPS is required for device location outside localhost.
 
-## Data and dependencies
+```sh
+npm run format
+npm run check
+```
 
-- CesiumJS 1.121 is loaded from the Cesium CDN.
-- Satellite tiles are served by Esri World Imagery.
-- Street tiles are served by OpenStreetMap.
-- Place and address search uses Photon / OpenStreetMap, with Open-Meteo / GeoNames as a fallback. The public Photon demo service is suitable for moderate usage; high-traffic deployments should use a dedicated geocoder.
-- Place descriptions are curated; Wikipedia links provide further reading.
-- Fonts are loaded from Google Fonts.
+For viewing without development tools, run `python3 -m http.server 8080 --directory dist`.
 
-Map imagery, fonts and other third-party materials retain their own licenses and terms. Keep provider attribution visible. Review provider usage policies before running a high-traffic deployment; the code license does not grant rights to third-party services or imagery.
+## Source layout
 
-This project uses an ellipsoid globe. It does not include terrain elevation, photorealistic 3D buildings, Google Earth data or Street View. Imagery is not live and its date and resolution vary. External services may be unavailable or rate-limited.
+| File                 | Purpose                                           |
+| -------------------- | ------------------------------------------------- |
+| `dist/index.html`    | App structure and accessible controls             |
+| `dist/style.css`     | Desktop and mobile styling                        |
+| `dist/app.js`        | Search, map switching and interface coordination  |
+| `dist/street.js`     | MapLibre vector map adapter                       |
+| `dist/view-state.js` | Shared-view parsing, validation and serialization |
+| `dist/clarity.js`    | Satellite tile-availability checks                |
+| `dist/config.js`     | Public provider endpoints                         |
+| `tests/`             | Regression tests                                  |
+
+`dist` is editable static source, not generated output. Any static host can serve it. Prettier and ESLint are development dependencies only.
+
+## Coverage and services
+
+Road data comes from OpenFreeMap / OpenStreetMap and is rendered by MapLibre. Satellite imagery comes from Esri and is rendered by Cesium. Search uses Photon with Open-Meteo / GeoNames fallback. Libraries and fonts are loaded from third-party CDNs.
+
+Vector maps stay sharp when zooming, but do not create missing roads or buildings. Satellite imagery has region-dependent resolution. Tile availability is checked at the view centre and is not a guarantee of photographic sharpness. No terrain elevation, live traffic, navigation directions, Street View or Google Earth imagery is included.
+
+Provider endpoints have their own policies, usage limits and availability. Before high-volume or commercial operation, review them and configure an appropriate provider. Preserve all attribution. The MIT license applies to this project's code, not third-party imagery or services.
 
 ## Privacy
 
-Search queries are sent to Photon when submitted, and to Open-Meteo if Photon returns no results or fails. Map providers receive tile requests as you explore. Device location is requested only when the location button is pressed. The current implementation has no application backend or analytics.
+Queries are sent to search providers. Map providers receive requests for viewed areas. Device location is used only after an explicit action and browser permission. Shared URLs include map coordinates. Terra has no application accounts, analytics or server-side location history.
 
-## Contribute
+## Contributions
 
-Bug reports, documentation improvements, accessibility fixes and focused pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
+Everyone can fork the repository and propose a pull request. Changes to `main` must follow the configured GitHub protection and review rules. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-The availability check uses Esri tile metadata after camera movement stops. It checks the view centre, not every visible tile. A tile being available does not guarantee sharper native photography; lower-resolution photography can still be present in a high-level tile. Checks are cached in memory and failures never claim imagery is missing.
+## License
+
+[MIT](LICENSE). Map data and dependencies retain their respective licenses.
